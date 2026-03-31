@@ -19,11 +19,13 @@ COPY lib/ /app/lib/
 COPY entrypoint.sh /app/entrypoint.sh
 COPY backup.sh /app/backup.sh
 COPY healthcheck.sh /app/healthcheck.sh
+COPY start.sh /app/start.sh
 
 # Make scripts executable
 RUN chmod +x /app/entrypoint.sh \
     /app/backup.sh \
     /app/healthcheck.sh \
+    /app/start.sh \
     /app/lib/*.sh
 
 # Health check

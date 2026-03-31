@@ -5,7 +5,7 @@
     "dockerfilePath": "services/backup/Dockerfile"
   },
   "deploy": {
-    "startCommand": "/app/backup.sh",
+    "startCommand": "/app/start.sh",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
