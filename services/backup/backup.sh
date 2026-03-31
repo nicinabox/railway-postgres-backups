@@ -108,6 +108,10 @@ perform_dump() {
     dump_start=$(date +%s)
 
     # Use pipe to compress on-the-fly
+    # Capture pg_dump output for debugging
+    local pgdump_output
+    pgdump_output=$(mktemp)
+    
     if pg_dump \
         -h "$PGHOST" \
         -p "$PGPORT" \
@@ -117,8 +121,7 @@ perform_dump() {
         --no-acl \
         --clean \
         --if-exists \
-        --verbose 2>&1 | \
-        grep -v "^pg_dump: " | \
+        --verbose 2> "$pgdump_output" | \
         gzip "-${COMPRESSION_LEVEL}" > "$output_file"; then
 
         local dump_end
@@ -128,6 +131,7 @@ perform_dump() {
         # Verify file was created and is not empty
         if [ ! -f "$output_file" ]; then
             log_error "Dump file was not created: $output_file"
+            rm -f "$pgdump_output"
             return 1
         fi
 
@@ -135,16 +139,21 @@ perform_dump() {
         file_size=$(get_file_size "$output_file")
         if [ "$file_size" -eq 0 ]; then
             log_error "Dump file is empty"
+            rm -f "$pgdump_output"
             return 1
         fi
 
         local size_human
         size_human=$(format_bytes "$file_size")
         log_info "Dump completed in ${dump_duration}s, size: $size_human"
+        rm -f "$pgdump_output"
 
         return 0
     else
         log_error "pg_dump failed"
+        log_error "pg_dump stderr:"
+        cat "$pgdump_output" | while read line; do log_error "  $line"; done
+        rm -f "$pgdump_output"
         return 1
     fi
 }
